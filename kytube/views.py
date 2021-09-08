@@ -2,6 +2,9 @@ from .forms import UploadFileForm
 from django.shortcuts import render
 import numpy as np
 # Create your views here.
+###add numpy to freeze list.
+
+
 def getCSVfmt(file):
     raw = file.read()
     arr_raw = raw.split('\n')
