@@ -5,6 +5,16 @@
 <body>
 <div>
     <h1>Yeah, I gotta come back to this.</h1>
+</div>
+<div>
+    <form method="POST" action="/kytube/submit" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="text" name="username">
+        <input type="file" name="data">
+        </br>
+        </br>
+            <button type="submit" class="btn btn-primary">Submit Data</button>
+    </form>
 </div> 
 </body>
 </html>
