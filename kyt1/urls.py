@@ -15,7 +15,10 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-
+from . import views
+from kytube import views as kytubeviews
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('', views.land,name="land"),
+    path('kytube/', kytubeviews.land,name="kytube")
 ]
