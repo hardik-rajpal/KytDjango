@@ -1,9 +1,11 @@
-from datetime import datetime
+import datetime
 from django.utils import timezone
 from django.shortcuts import render, redirect
 def land(request):
     return render(request,"land.html")
-def timer(request):
+def timer(request, tzo):
+    print(int(tzo))
+    # print(timezone.now())
     print(timezone.now())
-    print(datetime.now())
-    return render(request, "land.html", {'t1':timezone.now(), 't2':datetime.now()})
+    client_time = timezone.now() + datetime.timedelta(minutes = int(tzo) +11*60)
+    return render(request, "land.html", {'t1':timezone.now(), 't2':client_time})
