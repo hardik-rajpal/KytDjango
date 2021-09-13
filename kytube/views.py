@@ -3,10 +3,29 @@ from django.shortcuts import render
 import numpy as np
 # Create your views here.
 ###add numpy to freeze list.
-
-
-def getCSVfmt(file):
-    raw = file.read()
+import codecs
+# import threading
+# class myThread(threading.Thread):
+#    def __init__(self, threadID, name, mainf, data=None, request=None):
+#       threading.Thread.__init__(self)
+#       self.threadID = threadID
+#       self.name = name
+#       self.mainf = mainf
+#       self.data = data
+#       self.request = request
+#    def run(self):
+#     #   print("Starting " + self.name)
+#       self.mainf(self.data, self.request)
+#     #   print("Exiting " + self.name)
+def updateUser(done,request):
+    # print(done, "as received")
+    return render(request, "kytube_land.html", {'done':done})
+def getCSVfmt(file, request,get_proc=False):
+    # file = open('')
+    # if(not file.isclose()):
+    binary = file.read()
+    text = codecs.encode(codecs.decode(binary), encoding='utf-8')
+    raw = text.decode()
     arr_raw = raw.split('\n')
     # for inst in arr_raw:
     #     print(inst.split('<div class="content-cell').__len__())
@@ -33,6 +52,7 @@ def getCSVfmt(file):
     data = np.empty([rows, cols],dtype='<U100')
     j=0
     for i in range(len(raw_instances)):
+        #add proccess bar informer
         ri = raw_instances[i]
         detes = ri.split('Watched\xa0<a')
         # print(detes)
@@ -58,7 +78,7 @@ def getCSVfmt(file):
             day_date = int(date.split(',')[0][-2:])
             year = int(date.split(',')[1][-2:])
             index_by_month = str(year + round((1/12)*mtoi[month], 2))
-            print(index_by_month)
+            # print(index_by_month)
             index_by_date = str(round(float(index_by_month)+ round(day_date/(12*31), 5), 5))
             data[j] = np.array([index_by_month, index_by_date,title, channel, link_vid, link_chan, date])
             j+=1
@@ -78,11 +98,18 @@ def getCSVfmt(file):
     titles, freq = np.unique(titles_list, return_counts=True)
     s_freq,s_titles = zip(*sorted(zip(freq, titles)))
     # sorted_freq = np.sort(freq)
-    print(s_freq)
-    print(s_titles[-1])
-    return data[:,:3]
+    # print(s_freq)
+    # print(s_titles[-1])
+    return data
 def land(request):
     return render(request, "kytube_land.html")
+
+
+def processData(data, request):
+    print('HI')
+    done = 0
+    table = getCSVfmt(data, request, get_proc=True)
+    #process collected data
 def submit(request):
     # print(request.POST)
     if request.method == 'POST':
@@ -90,7 +117,11 @@ def submit(request):
         # print(request.POST)
         if form.is_valid():
             data = request.FILES['data']
-            # table = getCSVfmt(data)
+            print(data)
+            # processortd = myThread(1, 'processortd', processData, data=data, request=request)
+            # processortd.start()
             # print(table)
-            print("hi")
-    return render(request, "kytube_land.html")
+            # print("hi")
+        else:
+            print("not valid")
+    return render(request, "processing.html")

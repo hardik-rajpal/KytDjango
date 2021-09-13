@@ -19,5 +19,6 @@ from . import views
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', views.land,name="land"),
-    path('kytube/', include('kytube.urls'))
+    path('kytube/', include('kytube.urls')),
+    path('getyourtime/', views.timer, name='timer')
 ]
