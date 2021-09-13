@@ -6,4 +6,4 @@ def land(request):
 def timer(request):
     print(timezone.now())
     print(datetime.now())
-    return render(request, "land.html")
+    return render(request, "land.html", {'t1':timezone.now(), 't2':datetime.now()})
