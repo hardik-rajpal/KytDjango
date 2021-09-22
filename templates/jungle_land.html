@@ -27,7 +27,7 @@
         height: auto;
     }
 </style>
-
+<h1>JungleChats</h1>
 <div class="chatroom">
 
 </div>
@@ -36,19 +36,59 @@
 <div id="template_msg" class="msg" style="visibility: hidden;"><div class="replyto"></div><div class="sender"></div><div class="line"></div></div>
 <p id="snips" style="visibility: hidden;">{{snips}}</p>
 <script>
+    alias = {
+        'Sourish Wockrell':'The Bear',
+        'Srikar rockwell New':'The Deer',
+        '+1 (385) 296-8922':'The Koala',
+        'Hardik Rajpal':'The Tiger'
+    }
     /*
     Expected msg format:
     H#Title of snip goes hereH#
     dd/mm/yyyy, hh:mm - SENDERNAMEHERE: #F# #R:stringfornow# thelineoftext
     */
-   function toggleSnip(obj){
+    function mysleep(milliseconds) {
+        var start = new Date().getTime();
+        while(true) {
+            if ((new Date().getTime() - start) > milliseconds){
+            break;
+            }
+            console.log(new Date().getTime() - start)
+        }
+    }
+    forwabool=0
+    function caller(){
+        global_holder.childNodes[global_holder2].style.visibility = "unset";
+    }
+    function playChat(obj){
+        // console.log(obj)
+        for(i=2;i<obj.childNodes.length;i++){
+            (function(obj, i){
+                //add cumlen function
+                len = (obj.childNodes[i].childNodes[2].innerHTML).length
+            setTimeout(function(){
+                obj.childNodes[i].style.visibility = "unset";
+            }, 1000+0*i);
+                })(obj, i)
+        }
+        i=0
+    }
+
+
+    function toggleSnip(obj){
     if(obj.parentNode.className=="snip closed"){
         obj.parentNode.className = "snip open"
+        playChat(obj.parentNode)
     //    obj.parentNode.childNodes[1].style.visibility = "hidden"
     }
     else{
         obj.parentNode.className = "snip closed"
-    //    obj.parentNode.childNodes[1].style.visibility = "hidden"
+        obj = obj.parentNode
+        for(i=2;i<obj.childNodes.length;i++){
+            obj.childNodes[i].style.visibility = "hidden";
+        }
+        i=0
+        //    obj.parentNode.childNodes[1].style.visibility = "hidden"
     }
 
    }
@@ -63,6 +103,9 @@
         dt = metarr[0]
         content = metarr[1]
         sender = content.split(': ')[0]
+        
+        sender = alias[sender]
+        
         line = content.split(': ')[1]
         forwarded = false
         if(forwardRe.test(line)){
@@ -79,7 +122,7 @@
 
         // console.log(snipelem.childNodes[1])
         msgelem = temp_msg.cloneNode(true)
-        msgelem.style.visibility = "unset";
+        // msgelem.style.visibility = "unset";
         // console.log(msgelem.childElementCount)
         for(k=0;k<msgelem.childElementCount;k++){
             // console.log(msgelem.childNodes[k])
