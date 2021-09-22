@@ -1,0 +1,139 @@
+<style>
+    .chatroom > .snip{
+        margin:10px;
+    }
+    div{
+        visibility:inherit;
+    }
+    .snip > .msg{
+        margin:10px;
+        background-color: aquamarine;
+    }
+    .replyto{
+        background-color: lightpink;
+    }
+    .sender{
+        background-color: lightsalmon;
+    }
+    .snip{
+        border: 4px solid black;
+    }
+    .snip.closed{
+        height: 80px;
+        overflow: hidden;
+    }
+    .snip > h1{
+        background-color: lime;
+        height: auto;
+    }
+</style>
+
+<div class="chatroom">
+
+</div>
+<div id="template_snip" class="snip open" style="visibility: hidden;"><h1 class="title" onclick="toggleSnip(this)">Cool Heading</h1>
+</div>
+<div id="template_msg" class="msg" style="visibility: hidden;"><div class="replyto"></div><div class="sender"></div><div class="line"></div></div>
+<p id="snips" style="visibility: hidden;">{{snips}}</p>
+<script>
+    /*
+    Expected msg format:
+    H#Title of snip goes hereH#
+    dd/mm/yyyy, hh:mm - SENDERNAMEHERE: #F# #R:stringfornow# thelineoftext
+    */
+   function toggleSnip(obj){
+    if(obj.parentNode.className=="snip closed"){
+        obj.parentNode.className = "snip open"
+    //    obj.parentNode.childNodes[1].style.visibility = "hidden"
+    }
+    else{
+        obj.parentNode.className = "snip closed"
+    //    obj.parentNode.childNodes[1].style.visibility = "hidden"
+    }
+
+   }
+    const forwardRe = /#F#/
+    const replytoRe = /#R:\w+#/g;
+    chatroom = document.querySelector('.chatroom')
+    temp_snip = document.querySelector('#template_snip')
+    temp_msg = document.querySelector('#template_msg')
+
+    function processMsg(snipelem,msg){
+        metarr = msg.split(/\d\d - /)
+        dt = metarr[0]
+        content = metarr[1]
+        sender = content.split(': ')[0]
+        line = content.split(': ')[1]
+        forwarded = false
+        if(forwardRe.test(line)){
+            forwarded=true
+            line = 'Forwarded:' + '<br>' + line.split(forwardRe)[1]
+        }
+        replyto = ""
+        if(replytoRe.test(line)){
+            replyto = line.match(replytoRe)[0]
+            console.log(replyto)
+            replyto = replyto.split('#R:')[1].split('#')[0]
+            line = line.split(replytoRe)[1]
+        }
+
+        // console.log(snipelem.childNodes[1])
+        msgelem = temp_msg.cloneNode(true)
+        msgelem.style.visibility = "unset";
+        // console.log(msgelem.childElementCount)
+        for(k=0;k<msgelem.childElementCount;k++){
+            // console.log(msgelem.childNodes[k])
+            if(msgelem.childNodes[k].className=="replyto"){
+                msgelem.childNodes[k].innerHTML = replyto
+            }
+            else if(msgelem.childNodes[k].className=="sender"){
+                msgelem.childNodes[k].innerHTML = sender
+            }
+            else if(msgelem.childNodes[k].className=="line"){
+                msgelem.childNodes[k].innerHTML = line
+            }
+            else{window.alert("Unknown class encountered! in MSG Rendering.")}
+        }
+        snipelem.appendChild(msgelem)
+        return snipelem
+    }
+
+
+
+    sep = "{{sep}}"
+    snips = document.querySelector('#snips').innerHTML
+    snips = snips.split(sep)
+    titles = []
+    const dateRe = /^\d\d/;
+    for(i=0;i<snips.length;i++){
+        parts = snips[i].split('H#')
+        titles.push(parts[1])
+        snips[i] = parts[0] + parts[2]
+    }
+    for(i=0;i<snips.length; i++){
+        console.log(snips.length)
+        snip = snips[i]
+        msgs = snip.split('\n')
+        snipelem = temp_snip.cloneNode(true)
+        snipelem.style.visibility = "unset";
+        snipelem.className = "snip closed";
+        snipelem.childNodes[0].innerHTML = titles[i]
+        for(j=0;j<msgs.length;j++){
+            if(msgs[j]==''){continue}
+            // console.log(msgs[j])
+            if(!dateRe.test(msgs[j])){
+                while(j>0 && !dateRe.test(msgs[j])){
+                    msgs[j-1] += ('\n'+msgs[j])
+                    msgs[j] = ''
+                    j--
+                    // console.log(msgs[j])
+                }
+            }
+            // console.log(snipelem)
+            snipelem = processMsg(snipelem,msgs[j])
+            
+        }
+        chatroom.appendChild(snipelem)
+        console.log(i, snips.length)
+    }
+</script>

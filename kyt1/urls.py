@@ -20,5 +20,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', views.land,name="land"),
     path('kytube/', include('kytube.urls')),
+    path('thejungle/', include('junglechat.urls')),
     path('getyourtime/<str:tzo>/', views.timer, name='timer')
 ]
