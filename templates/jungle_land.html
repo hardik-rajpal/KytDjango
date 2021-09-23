@@ -90,10 +90,11 @@
         for(i=2;i<obj.childNodes.length;i++){
             (function(obj, i){
                 //add cumlen function
-                len = (obj.childNodes[i].childNodes[2].innerHTML).length
+                // len = (obj.childNodes[i].childNodes[2].innerHTML).length
             setTimeout(function(){
-                obj.childNodes[i].style.visibility = "unset";
-            }, 1000+0*i);
+                    obj.childNodes[i].style.visibility = "unset";
+                    
+            }, 0+2000*i);
                 })(obj, i)
             
             if(obj.childNodes[i].childNodes[1].innerHTML==""){
