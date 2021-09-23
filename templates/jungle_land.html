@@ -5,15 +5,40 @@
     div{
         visibility:inherit;
     }
-    .snip > .msg{
+    .msg{
         margin:10px;
-        background-color: aquamarine;
+        font-size: 20px;
     }
     .replyto{
+        padding: 5px;
+        width:fit-content;
+        border-top-right-radius: 10px;
         background-color: lightpink;
     }
     .sender{
+        border-top-right-radius: 5px;
+        border-top-left-radius: 5px;
+        padding: 5px;
+        font-weight: bold;
+        width: fit-content;
         background-color: lightsalmon;
+    }
+
+    .line{
+        padding:10px;
+        margin-bottom:10px;
+        max-width: 400px;
+        width:fit-content;
+        border-radius: 10px;
+        border-top-left-radius: 0px;
+        background-color: aquamarine;
+    }
+    .forward{
+        margin:0px;
+        font-weight: bold;
+        color: grey;
+        font-style: italic;
+        font-family: sans-serif;
     }
     .snip{
         border: 4px solid black;
@@ -33,7 +58,7 @@
 </div>
 <div id="template_snip" class="snip open" style="visibility: hidden;"><h1 class="title" onclick="toggleSnip(this)">Cool Heading</h1>
 </div>
-<div id="template_msg" class="msg" style="visibility: hidden;"><div class="replyto"></div><div class="sender"></div><div class="line"></div></div>
+<div id="template_msg" class="msg chat-messages" style="visibility: hidden;"><div class="sender"></div><div class="replyto"></div><div class="line"></div></div>
 <p id="snips" style="visibility: hidden;">{{snips}}</p>
 <script>
     alias = {
@@ -70,6 +95,12 @@
                 obj.childNodes[i].style.visibility = "unset";
             }, 1000+0*i);
                 })(obj, i)
+            
+            if(obj.childNodes[i].childNodes[1].innerHTML==""){
+                obj.childNodes[i].removeChild(obj.childNodes[i].childNodes[1])
+            }
+            console.log()
+            
         }
         i=0
     }
@@ -110,7 +141,7 @@
         forwarded = false
         if(forwardRe.test(line)){
             forwarded=true
-            line = 'Forwarded:' + '<br>' + line.split(forwardRe)[1]
+            line = '<p class="forward">&#8667 Forwarded</p>'  + line.split(forwardRe)[1]
         }
         replyto = ""
         if(replytoRe.test(line)){
@@ -128,6 +159,9 @@
             // console.log(msgelem.childNodes[k])
             if(msgelem.childNodes[k].className=="replyto"){
                 msgelem.childNodes[k].innerHTML = replyto
+                if(replyto==""){
+                    msgelem.childNodes[k].style.visibility = "hidden";
+                }   
             }
             else if(msgelem.childNodes[k].className=="sender"){
                 msgelem.childNodes[k].innerHTML = sender
@@ -154,9 +188,22 @@
         snips[i] = parts[0] + parts[2]
     }
     for(i=0;i<snips.length; i++){
+        
+        
         console.log(snips.length)
         snip = snips[i]
         msgs = snip.split('\n')
+        
+        for(j=msgs.length-1;j>-1;j--){
+            console.log(msgs[j])
+            if(!dateRe.test(msgs[j])){
+                msgs[j-1] = msgs[j-1] + '<br>' + msgs[j]
+                msgs[j] = ""
+            }
+        }
+
+        
+        
         snipelem = temp_snip.cloneNode(true)
         snipelem.style.visibility = "unset";
         snipelem.className = "snip closed";
