@@ -1,26 +1,48 @@
+from django.http import request
 from .forms import UploadFileForm
 from django.shortcuts import render
+from .models import MainRow
 import numpy as np
+from django.http import HttpResponse
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import serializers, status
+import json
+
+
+from django.shortcuts import render, get_object_or_404
+class dataHandler(APIView):
+    def get(self, request):
+        global global_data
+        def ser(row):
+            ans = ""
+            for i in range(7):
+                ans = ans+str(row[i]) + "###"
+            return ans
+        arr = list(np.apply_along_axis(ser, 1, global_data[:10, :]))
+        return Response(json.dumps(arr))
 # Create your views here.
 ###add numpy to freeze list.
 import codecs
-# import threading
-# class myThread(threading.Thread):
-#    def __init__(self, threadID, name, mainf, data=None, request=None):
-#       threading.Thread.__init__(self)
-#       self.threadID = threadID
-#       self.name = name
-#       self.mainf = mainf
-#       self.data = data
-#       self.request = request
-#    def run(self):
-#     #   print("Starting " + self.name)
-#       self.mainf(self.data, self.request)
-#     #   print("Exiting " + self.name)
+import threading
+class myThread(threading.Thread):
+    def __init__(self, threadID, name, mainf, data):
+      threading.Thread.__init__(self)
+      self.threadID = threadID
+      self.name = name
+      self.mainf = mainf
+      self.data = data
+    #   self.request = request
+    def run(self):
+      self.mainf(*self.data)
+global_data = ""
+done = 0
+g_processor:myThread
 def updateUser(done,request):
     # print(done, "as received")
     return render(request, "kytube_land.html", {'done':done})
-def getCSVfmt(file, request,get_proc=False):
+def getCSVfmt(file, request=None,get_proc=False):
+    global global_data, done
     # file = open('')
     # if(not file.isclose()):
     binary = file.read()
@@ -51,8 +73,10 @@ def getCSVfmt(file, request,get_proc=False):
     }
     data = np.empty([rows, cols],dtype='<U100')
     j=0
+    l = len(raw_instances)
     for i in range(len(raw_instances)):
         #add proccess bar informer
+        done = i/l
         ri = raw_instances[i]
         detes = ri.split('Watched\xa0<a')
         # print(detes)
@@ -78,7 +102,7 @@ def getCSVfmt(file, request,get_proc=False):
             day_date = int(date.split(',')[0][-2:])
             year = int(date.split(',')[1][-2:])
             index_by_month = str(year + round((1/12)*mtoi[month], 2))
-            # print(index_by_month)
+            print(index_by_month)
             index_by_date = str(round(float(index_by_month)+ round(day_date/(12*31), 5), 5))
             data[j] = np.array([index_by_month, index_by_date,title, channel, link_vid, link_chan, date])
             j+=1
@@ -93,35 +117,43 @@ def getCSVfmt(file, request,get_proc=False):
     # print(data[:,1])
     data = data[:blank_first,:]
     # clean = open('data_cleaned.csv', 'w')
-    np.savetxt('data_cleaned.csv', data,fmt='%s', encoding='utf8', delimiter=delimit)
-    titles_list = data[:,1]
-    titles, freq = np.unique(titles_list, return_counts=True)
-    s_freq,s_titles = zip(*sorted(zip(freq, titles)))
-    # sorted_freq = np.sort(freq)
-    # print(s_freq)
-    # print(s_titles[-1])
-    return data
+    # np.savetxt('data_cleaned.csv', data,fmt='%s', encoding='utf8', delimiter=delimit)
+    #django table entries:
+    # def tabelize(row):
+    #     # row[6] = 
+    #     MainRow.objects.create(dayIndex=row[0], monthIndex=row[1], title=row[2], channel=row[3], titleLink=row[4], channelLink=row[5], moment = row[6])
+    # return data
+    # np.apply_along_axis(tabelize, 1, data)
+    
+    global_data = data
 def land(request):
     return render(request, "kytube_land.html")
-
-
-def processData(data, request):
+def results(request):
+    return render(request, "road_to_ang.html")
+def check_status(request):
+    print(done)
+    return render(request, "processing.html", {'progress':str(round(done, 2)), 'test':'blah'})
+    # else:
+    #     return render(request, "processing.html")
+    
+def processData(data):
     print('HI')
     done = 0
-    table = getCSVfmt(data, request, get_proc=True)
+    processor = myThread(1, 'pre', getCSVfmt, [data])
+    processor.start()
+    g_processor = processor
+    # print(processor.setDaemon(False))
+    print("work started")
+    return
     #process collected data
 def submit(request):
     # print(request.POST)
     if request.method == 'POST':
         form = UploadFileForm(request.POST, request.FILES)
         # print(request.POST)
-        if form.is_valid():
+        if (form.is_valid()):
             data = request.FILES['data']
-            print(data)
-            # processortd = myThread(1, 'processortd', processData, data=data, request=request)
-            # processortd.start()
-            # print(table)
-            # print("hi")
+            processData(data)
         else:
             print("not valid")
     return render(request, "processing.html")

@@ -1,5 +1,29 @@
-from django.shortcuts import render
+from django.http import HttpResponse
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import serializers, status
+from .serializers import ChatSnippetSerializer
+
+
+from django.shortcuts import render, get_object_or_404
 from .models import ChatSnippet
+class snippets(APIView):
+    def get(self, request):
+        snips = ChatSnippet.objects.all()
+        serializer = ChatSnippetSerializer(snips, many=True)
+        import json
+        d = {
+            'a':1,
+            'b':2,
+            'c':3,
+            'e':'energy'
+        }
+        a = [i*i for i in range(4)]
+        return Response(json.dumps(a))
+        print(serializer.data)
+        return Response(serializer.data)
+    def post(self):
+        pass
 def jungleland(request):
     chats = ChatSnippet.objects.all()
     sep = '###'

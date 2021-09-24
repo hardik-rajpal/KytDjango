@@ -2,5 +2,22 @@
 <html>
     Data received, processing.
     <br>
-    {{done}}
+    {{test}}
+    {{progress}} done
+<a href="{% url 'check_status' %}">Hello</a>
+<script>
+    p = "{{progress}}"
+    secretLink = document.querySelector('a')
+    if(p==1.0){
+        secretLink.href = "/kytube/resang"
+        secretLink.click()
+    }
+    else{
+        setTimeout(()=>{
+        secretLink.click()
+    }, 300)
+
+    }
+
+</script>
 </html>
