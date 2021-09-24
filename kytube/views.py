@@ -1,3 +1,4 @@
+from .analysis import getDatof, getTimeDat, topNentries
 from django.http import request
 from .forms import UploadFileForm
 from django.shortcuts import render
@@ -19,8 +20,8 @@ class dataHandler(APIView):
             for i in range(7):
                 ans = ans+str(row[i]) + "###"
             return ans
-        arr = list(np.apply_along_axis(ser, 1, global_data[:10, :]))
-        return Response(json.dumps(arr))
+        # arr = list(np.apply_along_axis(ser, 1, global_data[:10, :]))
+        return Response(json.dumps(global_data))
 # Create your views here.
 ###add numpy to freeze list.
 import codecs
@@ -35,29 +36,10 @@ class myThread(threading.Thread):
     #   self.request = request
     def run(self):
       self.mainf(*self.data)
-global_data = ""
+global_data = {}
 done = 0
-g_processor:myThread
-def updateUser(done,request):
-    # print(done, "as received")
-    return render(request, "kytube_land.html", {'done':done})
-def getCSVfmt(file, request=None,get_proc=False):
-    global global_data, done
-    # file = open('')
-    # if(not file.isclose()):
-    binary = file.read()
-    text = codecs.encode(codecs.decode(binary), encoding='utf-8')
-    raw = text.decode()
-    arr_raw = raw.split('\n')
-    # for inst in arr_raw:
-    #     print(inst.split('<div class="content-cell').__len__())
-    raw_instances = arr_raw[-1].split('<div class="content-cell mdl-cell mdl-cell--6-col mdl-typography--body-1">')
-    # for ri in raw_instances:
-    delimit =  ' ,,, '
-    raw_instances.pop(0)
-    rows = raw_instances.__len__()
-    cols = 7
-    mtoi = {
+delimit =  ' ,,, '
+mtoi = {
         'Jan':0,
         'Feb':1,
         'Mar':2,
@@ -71,10 +53,62 @@ def getCSVfmt(file, request=None,get_proc=False):
         'Nov':10,
         'Dec':11,
     }
+daysinmonths = {
+    'Jan':31,
+    'Feb':28,
+    'Mar':31,
+    'Apr':30,
+    'May':31,
+    'Jun':30,
+    'Jul':31,
+    'Aug':31,
+    'Sep':30,
+    'Oct':31,
+    'Nov':30,
+    'Dec':31,
+}
+def indices_from_date(date):
+    month = date[:3]
+    day_date = int(date.split(',')[0][-2:])
+    year = int(date.split(',')[1][-2:])
+    index_by_month = str(year + round((1/12)*mtoi[month], 2))
+    index_by_date = str(round(float(index_by_month)+ round(day_date/(12*daysinmonths[month]), 5), 5))
+    return index_by_month, index_by_date
+g_processor:myThread
+def analyse_data(data):
+    global global_data
+    # table, vals = topNentries(data)
+    # global_data['TopN'] = json.dumps(table)
+    # viewfreq = getTimeDat(data)
+    # global_data['viewFreq'] = json.dumps(viewfreq)
+    kwtable = getDatof(data, [2, 3], ['Jiya', ''])
+    global_data['kwtable'] = json.dumps(kwtable)
+def updateUser(done,request):
+    # print(done, "as received")
+    return render(request, "kytube_land.html", {'done':done})
+def getCSVfmt(file, request=None,get_proc=False):
+    global global_data, done,delimit, mtoi, daysinmonths,indices_from_date
+    # file = open('')
+    # if(not file.isclose()):
+    binary = file.read()
+    text = codecs.encode(codecs.decode(binary), encoding='utf-8')
+    raw = text.decode()
+    arr_raw = raw.split('\n')
+    # for inst in arr_raw:
+    #     print(inst.split('<div class="content-cell').__len__())
+    raw_instances = arr_raw[-1].split('<div class="content-cell mdl-cell mdl-cell--6-col mdl-typography--body-1">')
+    # for ri in raw_instances:
+    
+    raw_instances.pop(0)
+    rows = raw_instances.__len__()
+    cols = 7
+    
     data = np.empty([rows, cols],dtype='<U100')
     j=0
     l = len(raw_instances)
-    for i in range(len(raw_instances)):
+    # l = 
+    i = l - 20
+    for i in range(i,l):
         #add proccess bar informer
         done = i/l
         ri = raw_instances[i]
@@ -124,10 +158,11 @@ def getCSVfmt(file, request=None,get_proc=False):
     #     MainRow.objects.create(dayIndex=row[0], monthIndex=row[1], title=row[2], channel=row[3], titleLink=row[4], channelLink=row[5], moment = row[6])
     # return data
     # np.apply_along_axis(tabelize, 1, data)
-    
-    global_data = data
+    # global_data['total'] = data
+    analyse_data(data)
 def land(request):
-    return render(request, "kytube_land.html")
+    form = UploadFileForm()
+    return render(request, "kytube_land.html", {'form':form.as_p()})
 def results(request):
     return render(request, "road_to_ang.html")
 def check_status(request):
