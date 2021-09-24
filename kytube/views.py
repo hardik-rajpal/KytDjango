@@ -1,4 +1,4 @@
-from .analysis import getDatof, getTimeDat, topNentries
+from .analysis import daytimeplot, getDateFilter, getDatof, getTimeDat, getTimeFilter, mostWatchedDays, plot_kw_freq, plotkwfreqMultiple, topNentries, indices_from_date
 from django.http import request
 from .forms import UploadFileForm
 from django.shortcuts import render
@@ -67,22 +67,28 @@ daysinmonths = {
     'Nov':30,
     'Dec':31,
 }
-def indices_from_date(date):
-    month = date[:3]
-    day_date = int(date.split(',')[0][-2:])
-    year = int(date.split(',')[1][-2:])
-    index_by_month = str(year + round((1/12)*mtoi[month], 2))
-    index_by_date = str(round(float(index_by_month)+ round(day_date/(12*daysinmonths[month]), 5), 5))
-    return index_by_month, index_by_date
+
 g_processor:myThread
 def analyse_data(data):
     global global_data
-    # table, vals = topNentries(data)
-    # global_data['TopN'] = json.dumps(table)
-    # viewfreq = getTimeDat(data)
-    # global_data['viewFreq'] = json.dumps(viewfreq)
-    kwtable = getDatof(data, [2, 3], ['Jiya', ''])
-    global_data['kwtable'] = json.dumps(kwtable)
+    table, vals = topNentries(data)
+    global_data['User1'] = {'TopNVideos': table}
+    viewfreq = getTimeDat(data)
+    global_data['User1']['viewFreq'] = viewfreq
+    # kwtable = getDatof(data, [2, 3], ['Jiya', ''])
+    # global_data['kwtable'] = json.dumps(kwtable)
+    # daytime = daytimeplot(data, [['Crash Course'],['Glendale']])
+    # global_data['daytime'] = json.dumps(daytime)
+    # kw_freq = plot_kw_freq(data, ['Glendale'])
+    # global_data['kwFreq'] = json.dumps(kw_freq)
+    # mulkwfreq=plotkwfreqMultiple(data, [['Glendale'], ['Crash Course']])
+    # global_data['mult'] = json.dumps(mulkwfreq)
+    # datbound = getDateFilter(data, 17.57, 18.18)
+    # global_data['datbound'] = json.dumps(datbound)
+    # timefilt = getTimeFilter(data, data, 1 ,23)
+    # global_data['timefilt'] = json.dumps(timefilt)
+    # times, days = mostWatchedDays(data, 5)
+    # global_data['topNdays'] = json.dumps(days)
 def updateUser(done,request):
     # print(done, "as received")
     return render(request, "kytube_land.html", {'done':done})
@@ -107,7 +113,7 @@ def getCSVfmt(file, request=None,get_proc=False):
     j=0
     l = len(raw_instances)
     # l = 
-    i = l - 20
+    i = l - 60
     for i in range(i,l):
         #add proccess bar informer
         done = i/l
@@ -131,13 +137,10 @@ def getCSVfmt(file, request=None,get_proc=False):
 
         date = segs[6][:-5]
         month = date[:3]
-
         try:
             day_date = int(date.split(',')[0][-2:])
             year = int(date.split(',')[1][-2:])
-            index_by_month = str(year + round((1/12)*mtoi[month], 2))
-            print(index_by_month)
-            index_by_date = str(round(float(index_by_month)+ round(day_date/(12*31), 5), 5))
+            index_by_month,index_by_date = indices_from_date(date)
             data[j] = np.array([index_by_month, index_by_date,title, channel, link_vid, link_chan, date])
             j+=1
         except:

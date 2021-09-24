@@ -41,14 +41,20 @@ get_date = np.vectorize(lambda x: ','.join(x.split(',')[:2]))
 get_time_12hr = np.vectorize(lambda x: ''.join((x.split(',')[-1]).split(' ')[:-1]))
 ampm_to_24hr = np.vectorize(lambda x: int(x.split(':')[0]) + (12)*(int(x[-2:]=='PM')))
 ampm_to_24hr_pre = np.vectorize(lambda x: int(x.split(':')[0]) + (12)*(int(x[-2:]=='PM')) + round(int(x.split(':')[1])/60, 2))
-
+def indices_from_date(date):
+    month = date[:3]
+    day_date = int(date.split(',')[0][-2:])
+    year = int(date.split(',')[1][-2:])
+    index_by_month = str(year + round((1/12)*mtoi[month], 2))
+    index_by_date = str(round(float(index_by_month)+ round(day_date/(12*daysinmonths[month]), 5), 5))
+    return index_by_month, index_by_date
 def colfreq(data, col_index, getUnsorted=False):
     # if(col_index==0):
-    #     try:
-    #         col = data[:,col_index]
-    #     except:
-    #         col = data
-    col = data[:,col_index]
+    try:
+        col = data[:,col_index]
+    except:
+        col = data
+    # col = data[:,col_index]
     col, freq = np.unique(col, return_counts=True)
     s_freq,s_col = zip(*sorted(zip(freq, col)))
     if(getUnsorted):
@@ -82,6 +88,7 @@ def topNentries(data, title_index=2,N=10, showTable=True):
     # print(table_arr)
     return (table_arr, np.array([s_titles, s_freq]).transpose()[::-1,:])
 def getTimeDat(rows, mi=0, di=1):
+    rows = np.array(rows)
     i_m, i_m_c = np.unique(rows[:,mi], return_counts=True)
     i_d, i_d_c = np.unique(rows[:,di], return_counts=True)
     return [[i_m.tolist(), i_m_c.tolist()], [i_d.tolist(), i_d_c.tolist()]]
@@ -102,14 +109,13 @@ def getDatof(table:np.ndarray, columns,list_of_kw, return_bools = False):
 def daytimeplot(data, kw_list):
     dates_times_literal = data[:,6]
     table = {}
-# freq_did, did = zip(*sorted(zip(freq_did, did)))
     for kw in kw_list:
         prob=np.zeros(shape=(24,))
         hours_dat = ampm_to_24hr(get_time_12hr(dates_times_literal[getDatof(data, [2, 3], kw, return_bools=True)[1]]))
         u_hrs_dat, hrs_freq = np.unique(hours_dat, return_counts=True)
         u_hrs_dat = u_hrs_dat % 24
         prob[u_hrs_dat] += hrs_freq/len(hours_dat)
-        table[f"Daytime probability of watching {kw[0]}"] = prob
+        table[f"Daytime probability of watching {kw[0]}"] = prob.tolist()
     #     plt.plot(np.arange(0, 24, 1), prob, label=f"Daytime probability of watching {kw[0]}")
     #     plt.title("")
     #     plt.legend()
@@ -120,11 +126,10 @@ def daytimeplot(data, kw_list):
     #     plt.xticks(list(range(24)))
     # plt.show()
     return table
-def plot_kw_freq(data,kw:list, ax=None, title='', avg_month=True):
+def plot_kw_freq(data,kw:list, title='', avg_month=True):
         dat = getDatof(data, [2, 3], kw)
         return getTimeDat(dat)
 def plotkwfreqMultiple(data,kw:list, avg_month_=True):
-    ax=None
     table = {}
     for kw_list in kw:
         table[kw_list[0]] = plot_kw_freq(data, kw_list, kw_list[0], avg_month=avg_month_)
@@ -132,40 +137,41 @@ def plotkwfreqMultiple(data,kw:list, avg_month_=True):
     # plt.show()
     return table
 def getDateFilter(table, ll, ul):
+    
     dim = table[:,0]
+    dim = np.vectorize(lambda x:float(x))(dim)
+    # print(dim)
     bools = arr_and(dim>=ll, dim<=ul)
-    return table[bools]
+    return table[bools].tolist()
 def getTimeFilter(data,table, ll, ul):
     dates_times_literal = data[:,6]
     hours_dat = ampm_to_24hr(get_time_12hr(dates_times_literal))
     bools = arr_and(hours_dat>=ll,(hours_dat<=ul))
     hours_within_bounds = hours_dat[np.where(bools)]
     # print(hours_within_bounds)
-    return table[bools]
-def indices_from_date(date):
-    month = date[:3]
-    day_date = int(date.split(',')[0][-2:])
-    year = int(date.split(',')[1][-2:])
-    index_by_month = str(year + round((1/12)*mtoi[month], 2))
-    index_by_date = str(round(float(index_by_month)+ round(day_date/(12*daysinmonths[month]), 5), 5))
-    return index_by_month, index_by_date
+    return table[bools].tolist()
+
 def mostWatchedDays(data, N=10):
     dates_times_literal = data[:,6]
+    print(dates_times_literal)
     dates_literal = get_date(dates_times_literal)
     arr = topNentries(dates_literal, 0, showTable=False)[1]
     durs = np.zeros(shape=(len(arr), int(arr[0,1])))
     for i in range(len(arr[:N,0])):
         date = arr[i,0]
         # print(date)
-        indices = np.where(data[:,1]==float(indices_from_date(date)[1]))[0]
+        print(data[:,1], date)
+        indices = np.where(data[:,1]==str(float(indices_from_date(date)[1])))[0]
         if(indices==[]):
             print('error',date, indices_from_date(date)[1])
+        print(indices)
         rows = data[indices,-1:]
         rows = get_time_12hr(rows[::-1,0])
         # print(rows)
         rows = ampm_to_24hr_pre(rows)
         durs[i,:len(rows)] = rows
-    return durs, arr
+    print(durs, arr)
+    return durs.tolist(), arr.tolist()
 
 
 ###Front end config:
