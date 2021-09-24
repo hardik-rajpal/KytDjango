@@ -1,8 +1,5 @@
-import matplotlib.pyplot as plt, math
-import numpy as np, pandas as pd
-from numpy.core.numeric import indices
-from numpy.core.defchararray import index
-from numpy.core.function_base import linspace
+import math
+import numpy as np
 mtoi = {
         'Jan':0,
         'Feb':1,
@@ -31,6 +28,7 @@ daysinmonths = {
     'Nov':30,
     'Dec':31,
 }
+
 arr_or = np.vectorize(lambda x, y: x or y)
 arr_and = np.vectorize(lambda x, y: x and y)
 months = list(mtoi.keys())
