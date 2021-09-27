@@ -85,11 +85,20 @@ def topNentries(data, title_index=2,N=10, showTable=True):
         # plt.clf()
     # print(table_arr)
     return (table_arr, np.array([s_titles, s_freq]).transpose()[::-1,:])
-def getTimeDat(rows, mi=0, di=1):
+def getTimeDat(rows, mi=0, di=1, superMonths=[], superDays=[]):
     rows = np.array(rows)
+    superMonths = np.unique(superMonths)
+    superDays = np.unique(superDays)
+    monthzeros = np.zeros(shape = len(superMonths))
+    dayzeros = np.zeros(shape = len(superDays))
     i_m, i_m_c = np.unique(rows[:,mi], return_counts=True)
+    # print(i_m)
+    # print(superMonths)
+    monthzeros[np.where(np.isin(superMonths, i_m))] = i_m_c
+    # print(monthzeros)
     i_d, i_d_c = np.unique(rows[:,di], return_counts=True)
-    return [[i_m.tolist(), i_m_c.tolist()], [i_d.tolist(), i_d_c.tolist()]]
+    dayzeros[np.where(np.isin(superDays,i_d))] = i_d_c
+    return [[superMonths.tolist(), monthzeros.tolist()], [superDays.tolist(), dayzeros.tolist()]]
     
 def getDatof(table:np.ndarray, columns,list_of_kw, return_bools = False):
         checksubstr = lambda arr, ss_arr: np.vectorize(lambda string: bool(sum([string.count(ss) for ss in ss_arr])))(arr)
@@ -125,8 +134,13 @@ def daytimeplot(data, kw_list):
     # plt.show()
     return table
 def plot_kw_freq(data,kw:list, title='', avg_month=True):
+        data = np.array(data)
+        supermonths=data[:,0]
+        superdays=data[:,1]
+        # print(supermonths)
+        # print(superdays)
         dat = getDatof(data, [2, 3], kw)
-        return getTimeDat(dat)
+        return getTimeDat(dat, superMonths=supermonths, superDays=superdays)
 def plotkwfreqMultiple(data,kw:list, avg_month_=True):
     table = {}
     for kw_list in kw:

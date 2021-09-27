@@ -136,3 +136,5 @@ django_heroku.settings(locals())
 
 # CORS_ORIGIN_WHITELIST = 'https://localhost:4200',
 CORS_ORIGIN_ALLOW_ALL=True
+
+DATA_UPLOAD_MAX_MEMORY_SIZE = None

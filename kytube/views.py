@@ -4,24 +4,104 @@ from .forms import UploadFileForm
 from django.shortcuts import render
 from .models import MainRow
 import numpy as np
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpRequest
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import serializers, status
 import json
-
+total_data = {}
 
 from django.shortcuts import render, get_object_or_404
+def extractRows(table):
+    retTable = np.empty(len(table), dtype='<U300')
+    def listready(row):
+        if(row=='None'):
+            return 'None'
+        try:
+            row = json.loads(row)
+            row:list
+            datetime = row[-1]
+            # print(datetime)
+            date = ','.join(datetime.split(',')[:2])
+            # print(date)
+            mi, di = indices_from_date(date)
+            row.insert(0, di)
+            row.insert(0, mi)
+        except:
+            print(row)
+            row = 'None'
+            return row
+    # except:
+            # print(row)
+        # print(json.dumps(row))
+        return json.dumps(row)
+    # listready(table)
+    retTable = []
+    for row in table:
+        a = listready(row)
+        if(a!='None'):
+            retTable.append(json.loads(a))
+        else:
+            continue
+    # print(retTable)
+    return np.array(retTable, dtype='<U400')
 class dataHandler(APIView):
     def get(self, request):
         global global_data
-        def ser(row):
-            ans = ""
-            for i in range(7):
-                ans = ans+str(row[i]) + "###"
-            return ans
-        # arr = list(np.apply_along_axis(ser, 1, global_data[:10, :]))
-        return Response(json.dumps(global_data))
+        print("HI")
+        print(request.body)
+        # print(json.loads(request.body.decode()))
+        # datamain = json.loads((request.body).decode())['params']['updates']
+        # print("HI")
+        # purpose = datamain[0]['value']
+        # print("HI")
+        # userid = datamain[1]['value']     
+        # print("HI")
+        # rows = datamain[2]['value']
+        # if(purpose=='Userdata'):
+        #     print("Hi")
+        #     return Response(json.dumps(global_data[userid]))
+        return Response(json.dumps([1, 2, 3]))
+    def post(self, request:HttpRequest):
+        # print(request.headers)
+        purpose=""
+        userid=""
+        rows=""
+        datamain = json.loads((request.body).decode())        
+        if(len(datamain)==3):
+            purpose = datamain[0]['value']
+            userid = datamain[1]['value']     
+            rows = datamain[2]['value']
+        else:
+            try:
+                datamain = json.loads((request.body).decode())['params']['updates']
+                purpose = datamain[0]['value']
+                userid = datamain[1]['value']     
+                rows = datamain[2]['value']
+            except:
+                print(len(datamain))
+                print(datamain)
+        if(purpose=='Senduserdata'):
+            table = json.loads(rows)
+            table = extractRows(table)
+            processData(table, userid)
+            return Response(json.dumps([1, 2]))
+        elif(purpose=='Userdata'):
+            return Response(json.dumps(global_data[userid]))
+        if(purpose=='Groupwise'):
+            kwlist = json.loads(rows)
+            for kw in kwlist:
+                if(kw.__contains__([])):
+                    kw:list
+                    kw.remove([])
+                    kw.append([''])
+            # print(datamain[2])
+            resp = {}
+            print(kwlist, type(kwlist))
+            resp['viewFreq'] = plotkwfreqMultiple(total_data[userid],kwlist)
+            resp['daytimeFreq'] = daytimeplot(total_data[userid], kwlist)
+            return Response(json.dumps(resp))
+        return Response(json.dumps([1, 2, 3]))
 # Create your views here.
 ###add numpy to freeze list.
 import codecs
@@ -38,6 +118,7 @@ class myThread(threading.Thread):
       self.mainf(*self.data)
 global_data = {}
 done = 0
+i = 0
 delimit =  ' ,,, '
 mtoi = {
         'Jan':0,
@@ -69,16 +150,17 @@ daysinmonths = {
 }
 
 g_processor:myThread
-def analyse_data(data):
-    global global_data
+def analyse_data(data, userid):
+    global global_data, total_data
+    total_data[userid] = data
     table, vals = topNentries(data)
-    global_data['User1'] = {'TopNVideos': table}
-    viewfreq = getTimeDat(data)
-    global_data['User1']['viewFreq'] = viewfreq
+    global_data[userid] = {'TopNVideos': table}
+    viewfreq = plotkwfreqMultiple(data, [['Youtube', '']])
+    global_data[userid]['viewFreq'] = viewfreq
     # kwtable = getDatof(data, [2, 3], ['Jiya', ''])
     # global_data['kwtable'] = json.dumps(kwtable)
-    # daytime = daytimeplot(data, [['Crash Course'],['Glendale']])
-    # global_data['daytime'] = json.dumps(daytime)
+    daytime = daytimeplot(data, [['Youtube', '']])
+    global_data[userid]['daytimeFreq'] = daytime
     # kw_freq = plot_kw_freq(data, ['Glendale'])
     # global_data['kwFreq'] = json.dumps(kw_freq)
     # mulkwfreq=plotkwfreqMultiple(data, [['Glendale'], ['Crash Course']])
@@ -92,77 +174,32 @@ def analyse_data(data):
 def updateUser(done,request):
     # print(done, "as received")
     return render(request, "kytube_land.html", {'done':done})
-def getCSVfmt(file, request=None,get_proc=False):
-    global global_data, done,delimit, mtoi, daysinmonths,indices_from_date
-    # file = open('')
-    # if(not file.isclose()):
-    binary = file.read()
-    text = codecs.encode(codecs.decode(binary), encoding='utf-8')
-    raw = text.decode()
-    arr_raw = raw.split('\n')
-    # for inst in arr_raw:
-    #     print(inst.split('<div class="content-cell').__len__())
-    raw_instances = arr_raw[-1].split('<div class="content-cell mdl-cell mdl-cell--6-col mdl-typography--body-1">')
-    # for ri in raw_instances:
+def getCSVfmt(data, userid,request=None,get_proc=False):
+    # print(data)
     
-    raw_instances.pop(0)
-    rows = raw_instances.__len__()
-    cols = 7
+    # global i
+    # rows = len(data)
+    # cols = 7
+    # newData = np.empty([rows, cols],dtype='<U200')
+    # l = len(data)
+    # i = 0
+    # def collectData(row):
+    #     global i
+    #     if(row=='None'):
+    #         return
+    #     try:
+    #         row = json.loads(row)
+    #     except:
+    #         print('Error at' + row + 'Do Something')
+    #         return
+    #     if(i<rows):
+    #         newData[i] = np.array(row)
+    #         i+=1
     
-    data = np.empty([rows, cols],dtype='<U100')
-    j=0
-    l = len(raw_instances)
-    # l = 
-    i = l - 60
-    for i in range(i,l):
-        #add proccess bar informer
-        done = i/l
-        ri = raw_instances[i]
-        detes = ri.split('Watched\xa0<a')
-        # print(detes)
-        try:
-            segs = detes[1].split('>')
-        except:
-            # print(detes, "Error here.")
-            continue
-        # print(detes)
-        title = segs[1][:-3]
-        title = title.replace('&#39;', "'")
-        title = title.replace('&amp;', '&')
-        # data = title.decode("utf-8")
-        # 
-        channel = segs[4][:-3]
-        link_vid = segs[0][7:-1]
-        link_chan = segs[3][9:-1]
-
-        date = segs[6][:-5]
-        month = date[:3]
-        try:
-            day_date = int(date.split(',')[0][-2:])
-            year = int(date.split(',')[1][-2:])
-            index_by_month,index_by_date = indices_from_date(date)
-            data[j] = np.array([index_by_month, index_by_date,title, channel, link_vid, link_chan, date])
-            j+=1
-        except:
-
-            # print('Private Vid possibly at: ', detes)
-            continue
-        # print(index_by_month, title, channel, link_vid, link_chan)
-
-
-    blank_first = np.where(data[:,1] == '')[0][0]
-    # print(data[:,1])
-    data = data[:blank_first,:]
-    # clean = open('data_cleaned.csv', 'w')
-    # np.savetxt('data_cleaned.csv', data,fmt='%s', encoding='utf8', delimiter=delimit)
-    #django table entries:
-    # def tabelize(row):
-    #     # row[6] = 
-    #     MainRow.objects.create(dayIndex=row[0], monthIndex=row[1], title=row[2], channel=row[3], titleLink=row[4], channelLink=row[5], moment = row[6])
-    # return data
-    # np.apply_along_axis(tabelize, 1, data)
-    # global_data['total'] = data
-    analyse_data(data)
+    # np.apply_along_axis()
+    # np.savetxt('temp.txt',newData, fmt='%s')
+    analyse_data(data, userid)
+    # print(userid)
 def land(request):
     form = UploadFileForm()
     return render(request, "kytube_land.html", {'form':form.as_p()})
@@ -174,13 +211,12 @@ def check_status(request):
     # else:
     #     return render(request, "processing.html")
     
-def processData(data):
+def processData(data, userid):
     print('HI')
     done = 0
-    processor = myThread(1, 'pre', getCSVfmt, [data])
+    processor = myThread(1, 'pre', getCSVfmt, [data, userid])
     processor.start()
     g_processor = processor
-    # print(processor.setDaemon(False))
     print("work started")
     return
     #process collected data
