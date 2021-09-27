@@ -10,7 +10,7 @@ from rest_framework.response import Response
 from rest_framework import serializers, status
 import json
 total_data = {}
-
+done = 0
 from django.shortcuts import render, get_object_or_404
 def extractRows(table):
     retTable = np.empty(len(table), dtype='<U300')
@@ -37,8 +37,13 @@ def extractRows(table):
         return json.dumps(row)
     # listready(table)
     retTable = []
+    global done
+    done = 0
+    len_table = len(table)
     for row in table:
+        done += 1/len_table
         a = listready(row)
+
         if(a!='None'):
             retTable.append(json.loads(a))
         else:
@@ -48,46 +53,41 @@ def extractRows(table):
 class dataHandler(APIView):
     def get(self, request):
         global global_data
-        print("HI")
-        print(request.body)
-        # print(json.loads(request.body.decode()))
-        # datamain = json.loads((request.body).decode())['params']['updates']
-        # print("HI")
-        # purpose = datamain[0]['value']
-        # print("HI")
-        # userid = datamain[1]['value']     
-        # print("HI")
-        # rows = datamain[2]['value']
-        # if(purpose=='Userdata'):
-        #     print("Hi")
-        #     return Response(json.dumps(global_data[userid]))
-        return Response(json.dumps([1, 2, 3]))
+        print("ASked status", global_data.keys())
+        return Response((round(done,2)))
     def post(self, request:HttpRequest):
         # print(request.headers)
         purpose=""
         userid=""
         rows=""
+        cleanedData=""
         datamain = json.loads((request.body).decode())        
-        if(len(datamain)==3):
+        if(len(datamain)==4):
             purpose = datamain[0]['value']
             userid = datamain[1]['value']     
             rows = datamain[2]['value']
+            cleanedData = datamain[3]['value']
         else:
             try:
                 datamain = json.loads((request.body).decode())['params']['updates']
                 purpose = datamain[0]['value']
                 userid = datamain[1]['value']     
                 rows = datamain[2]['value']
+                cleanedData = datamain[3]['value']
             except:
                 print(len(datamain))
                 print(datamain)
         if(purpose=='Senduserdata'):
             table = json.loads(rows)
             table = extractRows(table)
-            processData(table, userid)
-            return Response(json.dumps([1, 2]))
+            # processData()
+            cleanedData = getCSVfmt(table, userid)
+            return Response(json.dumps(cleanedData.tolist()))
         elif(purpose=='Userdata'):
-            return Response(json.dumps(global_data[userid]))
+            data = np.array(json.loads(cleanedData))
+            ans = analyse_data(data, userid)
+            print(ans.keys())
+            return Response(json.dumps(ans))
         if(purpose=='Groupwise'):
             kwlist = json.loads(rows)
             for kw in kwlist:
@@ -98,8 +98,9 @@ class dataHandler(APIView):
             # print(datamain[2])
             resp = {}
             print(kwlist, type(kwlist))
-            resp['viewFreq'] = plotkwfreqMultiple(total_data[userid],kwlist)
-            resp['daytimeFreq'] = daytimeplot(total_data[userid], kwlist)
+            totdat = np.array(json.loads(cleanedData))
+            resp['viewFreq'] = plotkwfreqMultiple(totdat,kwlist)
+            resp['daytimeFreq'] = daytimeplot(totdat, kwlist)
             return Response(json.dumps(resp))
         return Response(json.dumps([1, 2, 3]))
 # Create your views here.
@@ -117,7 +118,7 @@ class myThread(threading.Thread):
     def run(self):
       self.mainf(*self.data)
 global_data = {}
-done = 0
+
 i = 0
 delimit =  ' ,,, '
 mtoi = {
@@ -171,34 +172,12 @@ def analyse_data(data, userid):
     # global_data['timefilt'] = json.dumps(timefilt)
     # times, days = mostWatchedDays(data, 5)
     # global_data['topNdays'] = json.dumps(days)
+    return global_data[userid]
 def updateUser(done,request):
     # print(done, "as received")
     return render(request, "kytube_land.html", {'done':done})
 def getCSVfmt(data, userid,request=None,get_proc=False):
-    # print(data)
-    
-    # global i
-    # rows = len(data)
-    # cols = 7
-    # newData = np.empty([rows, cols],dtype='<U200')
-    # l = len(data)
-    # i = 0
-    # def collectData(row):
-    #     global i
-    #     if(row=='None'):
-    #         return
-    #     try:
-    #         row = json.loads(row)
-    #     except:
-    #         print('Error at' + row + 'Do Something')
-    #         return
-    #     if(i<rows):
-    #         newData[i] = np.array(row)
-    #         i+=1
-    
-    # np.apply_along_axis()
-    # np.savetxt('temp.txt',newData, fmt='%s')
-    analyse_data(data, userid)
+    return data
     # print(userid)
 def land(request):
     form = UploadFileForm()
@@ -213,7 +192,6 @@ def check_status(request):
     
 def processData(data, userid):
     print('HI')
-    done = 0
     processor = myThread(1, 'pre', getCSVfmt, [data, userid])
     processor.start()
     g_processor = processor
