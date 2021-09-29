@@ -28,7 +28,7 @@ def extractRows(table):
             row.insert(0, di)
             row.insert(0, mi)
         except:
-            print(row)
+            # print(row)
             row = 'None'
             return row
     # except:
