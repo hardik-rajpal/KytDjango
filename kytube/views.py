@@ -1,4 +1,4 @@
-from .analysis import daytimeplot, getDateFilter, getDatof, getTimeDat, getTimeFilter, mostWatchedDays, plot_kw_freq, plotkwfreqMultiple, topNentries, indices_from_date
+from .analysis import daytimeplot, getDateFilter, getDatof, getTimeDat, getTimeFilter, mostWatchedDays, plot_kw_freq, plotkwfreqMultiple, topNentries, indices_from_date,ampm_to_24hr, ampm_to_24hr, ampm_to_24hr_pre
 from django.http import request
 from .forms import UploadFileForm
 from django.shortcuts import render
@@ -86,7 +86,7 @@ class dataHandler(APIView):
         elif(purpose=='Userdata'):
             data = np.array(json.loads(cleanedData))
             ans = analyse_data(data, userid)
-            print(ans.keys())
+            # print(ans.keys())
             return Response(json.dumps(ans))
         if(purpose=='Groupwise'):
             kwlist = json.loads(rows)
@@ -96,15 +96,30 @@ class dataHandler(APIView):
                     kw.remove([])
                     kw.append([''])
             # print(datamain[2])
-            resp = {}
+            # resp = {}
             print(kwlist, type(kwlist))
             totdat = np.array(json.loads(cleanedData))
-            resp['viewFreq'] = plotkwfreqMultiple(totdat,kwlist)
-            resp['daytimeFreq'] = daytimeplot(totdat, kwlist)
+            resp = analyse_data(totdat, userid, kwlist)
             return Response(json.dumps(resp))
+        elif(purpose=='Filteruserdata'):
+            data = np.array(json.loads(cleanedData))
+            rows = json.loads(rows)
+            mi, di = indices_from_date(rows[0])
+            mi1, di1 = indices_from_date(rows[1])
+            timelims = ampm_to_24hr(np.array(rows[2:]))
+            print(timelims)
+            # print(data, di, di1)
+            data = np.array(getDateFilter(data, di, di1))
+            data = np.array(getTimeFilter(data, data,timelims[0],timelims[1]))
+            # print(data)
+            # ans = analyse_data(data, userid)
+            # print(rows)
+            print(rows[0],rows[1])#format to date-indice
+            print(rows[2],rows[3])#format to time-indice
+            return Response(json.dumps(data.tolist()))
+            #  data = getTimeFilter(data, data, )
         return Response(json.dumps([1, 2, 3]))
-# Create your views here.
-###add numpy to freeze list.
+
 import codecs
 import threading
 class myThread(threading.Thread):
@@ -151,16 +166,17 @@ daysinmonths = {
 }
 
 g_processor:myThread
-def analyse_data(data, userid):
+def analyse_data(data, userid, kwlist = [['Youtube', '']]):
     global global_data, total_data
     total_data[userid] = data
     table, vals = topNentries(data)
     global_data[userid] = {'TopNVideos': table}
-    viewfreq = plotkwfreqMultiple(data, [['Youtube', '']])
+    viewfreq, extdates = plotkwfreqMultiple(data, kwlist)
     global_data[userid]['viewFreq'] = viewfreq
+    global_data[userid]['extDates'] = extdates
     # kwtable = getDatof(data, [2, 3], ['Jiya', ''])
     # global_data['kwtable'] = json.dumps(kwtable)
-    daytime = daytimeplot(data, [['Youtube', '']])
+    daytime = daytimeplot(data, kwlist)
     global_data[userid]['daytimeFreq'] = daytime
     # kw_freq = plot_kw_freq(data, ['Glendale'])
     # global_data['kwFreq'] = json.dumps(kw_freq)

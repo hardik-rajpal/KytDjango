@@ -133,24 +133,34 @@ def daytimeplot(data, kw_list):
     #     plt.xticks(list(range(24)))
     # plt.show()
     return table
-def plot_kw_freq(data,kw:list, title='', avg_month=True):
+def plot_kw_freq(data,kw:list, title='', avg_month=True, retExt=False):
         data = np.array(data)
         supermonths=data[:,0]
         superdays=data[:,1]
+        superdates = data[:,-1]
+        extm = (superdates[-1], superdates[0])
         # print(supermonths)
         # print(superdays)
         dat = getDatof(data, [2, 3], kw)
-        return getTimeDat(dat, superMonths=supermonths, superDays=superdays)
+        main = getTimeDat(dat, superMonths=supermonths, superDays=superdays)
+        if(retExt):
+            return main, extm
+        else:
+            return main
 def plotkwfreqMultiple(data,kw:list, avg_month_=True):
     table = {}
+    extdates = ""
     for kw_list in kw:
-        table[kw_list[0]] = plot_kw_freq(data, kw_list, kw_list[0], avg_month=avg_month_)
+        main = plot_kw_freq(data, kw_list, kw_list[0], avg_month=avg_month_, retExt=True)
+        table[kw_list[0]] = main[0]
+        extdates = main[1]
         # ax = plot_kw_freq(data,kw_list, ax, kw_list[0], avg_month=avg_month_)
     # plt.show()
-    return table
-def getDateFilter(table, ll, ul):
-    
-    dim = table[:,0]
+    return table, extdates
+def getDateFilter(table, ll, ul, index=1):
+    dim = table[:,index]
+    ll = float(ll)
+    ul = float(ul)
     dim = np.vectorize(lambda x:float(x))(dim)
     # print(dim)
     bools = arr_and(dim>=ll, dim<=ul)
