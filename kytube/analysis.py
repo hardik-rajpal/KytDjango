@@ -61,29 +61,11 @@ def colfreq(data, col_index, getUnsorted=False):
 
 def topNentries(data, title_index=2,N=10, showTable=True):
     s_titles, s_freq = colfreq(data, title_index)
-    print(len(s_titles), N)
+    # print(len(s_titles), N)
     table_arr = []
     for i in range(1,min(N+1, len(s_titles))):
         table_arr.append([f"{i}",str(s_titles[-i]),f"{s_freq[-i]} times"])
 
-        # fig, ax = plt.subplots()
-        # ax.set_axis_off()
-        # table = ax.table(
-        #     colLabels=["Rank:", "Title: ", "Freq"],
-        #     colWidths=[0.1, 0.8,0.1],
-        #     cellText = table_arr,
-        #     cellLoc='center',
-        #     loc='upper left',
-        # )
-        # table.auto_set_font_size(False)
-        # table.set_fontsize(10)
-        # # table.scale(1.5, 1.5)
-        # ax.set_title("Most watched videos")
-        # plt.table(cellText=table_arr, fontsize=16)
-        # if(showTable):
-        #     plt.show()
-        # plt.clf()
-    # print(table_arr)
     return (table_arr, np.array([s_titles, s_freq]).transpose()[::-1,:])
 def getTimeDat(rows, mi=0, di=1, superMonths=[], superDays=[]):
     rows = np.array(rows)
@@ -175,24 +157,26 @@ def getTimeFilter(data,table, ll, ul):
 
 def mostWatchedDays(data, N=10):
     dates_times_literal = data[:,6]
-    print(dates_times_literal)
+    # print(dates_times_literal)
     dates_literal = get_date(dates_times_literal)
-    arr = topNentries(dates_literal, 0, showTable=False)[1]
+    arr = topNentries(dates_literal, 0, N=N,showTable=False)[1]
     durs = np.zeros(shape=(len(arr), int(arr[0,1])))
     for i in range(len(arr[:N,0])):
         date = arr[i,0]
         # print(date)
-        print(data[:,1], date)
+        # print(data[:,1], date)
         indices = np.where(data[:,1]==str(float(indices_from_date(date)[1])))[0]
         if(indices==[]):
             print('error',date, indices_from_date(date)[1])
-        print(indices)
+        # print(indices)
         rows = data[indices,-1:]
         rows = get_time_12hr(rows[::-1,0])
         # print(rows)
         rows = ampm_to_24hr_pre(rows)
         durs[i,:len(rows)] = rows
-    print(durs, arr)
+    e = min(N, len(durs))
+    durs = durs[:e]
+    arr = arr[:e]
     return durs.tolist(), arr.tolist()
 
 

@@ -186,8 +186,11 @@ def analyse_data(data, userid, kwlist = [['Youtube', '']]):
     # global_data['datbound'] = json.dumps(datbound)
     # timefilt = getTimeFilter(data, data, 1 ,23)
     # global_data['timefilt'] = json.dumps(timefilt)
-    # times, days = mostWatchedDays(data, 5)
-    # global_data['topNdays'] = json.dumps(days)
+    hours, days = mostWatchedDays(data, N=10)
+    global_data[userid]['topNDays'] = json.dumps({
+        'hours':hours,
+        'days':days
+    })
     return global_data[userid]
 def updateUser(done,request):
     # print(done, "as received")
