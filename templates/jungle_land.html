@@ -195,7 +195,7 @@
         snip = snips[i]
         msgs = snip.split('\n')
         
-        for(j=msgs.length-1;j>-1;j--){
+        for(let j=msgs.length-1;j>-1;j--){
             console.log(msgs[j])
             if(!dateRe.test(msgs[j])){
                 msgs[j-1] = msgs[j-1] + '<br>' + msgs[j]
