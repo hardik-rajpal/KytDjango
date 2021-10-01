@@ -41,7 +41,8 @@ INSTALLED_APPS = [
     'kytube',
     'junglechat',
     'rest_framework',
-    'corsheaders'
+    'corsheaders',
+    'viewtracker'
 ]
 
 MIDDLEWARE = [
