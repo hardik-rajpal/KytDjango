@@ -14,9 +14,9 @@ class VisitorData(APIView):
         # try:
         site = data[4]
         if(site=="kyt"):
-            vis,created = KYTVisitor.objects.get_or_create(userip=ip)
+            vis,created = KYTVisitor.objects.get_or_create(loc=loc)
         else:
-            vis, created = JCVisitor.objects.get_or_create(userip = ip)
+            vis, created = JCVisitor.objects.get_or_create(loc=loc)
         vis.freq+=1
         vis.loc = loc
         if(len(vis.dates)>1):
