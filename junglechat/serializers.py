@@ -17,4 +17,8 @@ class ChatSnippetSerializer(serializers.ModelSerializer):
         repre =  super().to_representation(instance)
         for key in alias:
             repre['snippet'] = repre['snippet'].replace(key, alias[key])
-        return repre
+        if(repre['published']):
+            return repre
+        else:
+            repre['snippet'] = "abc"
+            return repre
