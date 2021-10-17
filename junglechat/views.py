@@ -11,7 +11,6 @@ class snippets(APIView):
     def get(self, request):
         snips = ChatSnippet.objects.all()
         serializer = ChatSnippetSerializer(snips, many=True)
-        print(serializer.data)
         return Response(serializer.data)
     def post(self):
         pass
