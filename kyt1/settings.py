@@ -136,9 +136,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 django_heroku.settings(locals())
 
 # CORS_ORIGIN_WHITELIST = 'https://localhost:4200',
-CORS_ORIGIN_ALLOW_ALL=False
-CORS_ALLOWED_ORIGINS = [
-    'https://junglechats.herokuapp.com',
-]
+CORS_ORIGIN_ALLOW_ALL=True
+# CORS_ALLOWED_ORIGINS = [
+#     'https://junglechats.herokuapp.com',
+# ]
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = None

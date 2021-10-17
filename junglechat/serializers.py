@@ -7,7 +7,8 @@ alias = {
     'Hardik Rajpal':'The Tiger',
     'Sourish Sengupta':'The Bear',
     'Vijay Kiran Satyam':'The Koala',
-    'Srikar':'The Giraffe'
+    'Srikar':'The Giraffe',
+    '+1 (408) 315-5405':'The Elephant'
 }
 class ChatSnippetSerializer(serializers.ModelSerializer):
     class Meta:
