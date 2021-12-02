@@ -82,8 +82,11 @@ def getTimeDat(rows, mi=0, di=1, superMonths=[], superDays=[]):
     dayzeros[np.where(np.isin(superDays,i_d))] = i_d_c
     return [[superMonths.tolist(), monthzeros.tolist()], [superDays.tolist(), dayzeros.tolist()]]
     
-def getDatof(table:np.ndarray, columns,list_of_kw, return_bools = False):
-        checksubstr = lambda arr, ss_arr: np.vectorize(lambda string: bool(sum([string.count(ss) for ss in ss_arr])))(arr)
+def getDatof(table, columns,list_of_kw, return_bools = False):
+        table = np.array(table)
+        for i in range(len(list_of_kw)):
+            list_of_kw[i] = list_of_kw[i].lower()
+        checksubstr = lambda arr, ss_arr: np.vectorize(lambda string: bool(sum([string.lower().count(ss) for ss in ss_arr])))(arr)
         bools = (np.ones(shape=(table.shape[0]))!=1)
         # print(bools)
         for i in columns:
@@ -115,7 +118,7 @@ def daytimeplot(data, kw_list):
     #     plt.xticks(list(range(24)))
     # plt.show()
     return table
-def plot_kw_freq(data,kw:list, title='', avg_month=True, retExt=False):
+def plot_kw_freq(data,kw:list, title='', columns=[2, 3], avg_month=True, retExt=False):
         data = np.array(data)
         supermonths=data[:,0]
         superdays=data[:,1]
@@ -123,17 +126,17 @@ def plot_kw_freq(data,kw:list, title='', avg_month=True, retExt=False):
         extm = (superdates[-1], superdates[0])
         # print(supermonths)
         # print(superdays)
-        dat = getDatof(data, [2, 3], kw)
+        dat = getDatof(data, columns, kw)
         main = getTimeDat(dat, superMonths=supermonths, superDays=superdays)
         if(retExt):
             return main, extm
         else:
             return main
-def plotkwfreqMultiple(data,kw:list, avg_month_=True):
+def plotkwfreqMultiple(data,kw:list, avg_month_=True,columns=[2, 3]):
     table = {}
     extdates = ""
     for kw_list in kw:
-        main = plot_kw_freq(data, kw_list, kw_list[0], avg_month=avg_month_, retExt=True)
+        main = plot_kw_freq(data, kw_list, kw_list[0], columns=columns,avg_month=avg_month_, retExt=True)
         table[kw_list[0]] = main[0]
         extdates = main[1]
         # ax = plot_kw_freq(data,kw_list, ax, kw_list[0], avg_month=avg_month_)
@@ -179,34 +182,3 @@ def mostWatchedDays(data, N=10):
     arr = arr[:e]
     return durs.tolist(), arr.tolist()
 
-
-###Front end config:
-
-# def plotlimshow(x, y, dim=None, freq_dim=None, did=None, freq_did=None, show_plot=True, return_axes=False, avg_month_dat = True,ax=None, title=''):
-#     if(ax==None):
-#         fig, ax = plt.subplots()
-#     if(avg_month_dat):
-#         indexgetter = np.vectorize(lambda x: str(round(x - int(x), 2)))
-#         itmoer = np.vectorize(lambda x: itmo[x])
-#         daysinmonthser = np.vectorize(lambda x: daysinmonths[x])
-#         days = daysinmonthser(itmoer(indexgetter(dim)))
-#         ax.plot(dim, freq_dim/days, label=f"Monthly Average of Daily Total of {title}")
-#     else:
-#         ax.plot(dim, freq_dim, label=f"Monthly Average of Daily Total of {title}")
-#     ax.scatter(did, freq_did, label=f"Daily Total of {title}")
-#     # for i,date in enumerate(dates_u):
-#     #     ax.annotate(date, (did[i], freq_did[i]))
-#     plt.legend()
-#     plt.xlabel("Time")
-#     plt.ylabel("Number of Youtube Videos")
-#     # plt.show()
-#     plt.xticks(dim,[ind_to_tick(dim[i]) for i in range(len(dim))], fontsize="7")
-#     if(x!=None and y!=None):
-#         plt.xlim(x, y)
-#     if(return_axes):
-#         return ax
-#     if(show_plot):
-#         plt.show()
-
-
-###

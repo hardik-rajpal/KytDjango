@@ -62,11 +62,12 @@ class dataHandler(APIView):
         rows=""
         cleanedData=""
         datamain = json.loads((request.body).decode())        
-        if(len(datamain)==4):
+        if(len(datamain)==5):
             purpose = datamain[0]['value']
             userid = datamain[1]['value']     
             rows = datamain[2]['value']
             cleanedData = datamain[3]['value']
+            columns = datamain[4]['value']
         else:
             try:
                 datamain = json.loads((request.body).decode())['params']['updates']
@@ -74,9 +75,12 @@ class dataHandler(APIView):
                 userid = datamain[1]['value']     
                 rows = datamain[2]['value']
                 cleanedData = datamain[3]['value']
+                columns = datamain[4]['value']
+                # cleanedData = data
+                # columns = datamain[4]['value']
             except:
                 print(len(datamain))
-                print(datamain)
+                # print(datamain)
         if(purpose=='Senduserdata'):
             table = json.loads(rows)
             table = extractRows(table)
@@ -84,6 +88,8 @@ class dataHandler(APIView):
             cleanedData = getCSVfmt(table, userid)
             return Response(json.dumps(cleanedData.tolist()))
         elif(purpose=='Userdata'):
+            # print(len(datamain))
+            # print("cleaneddata",cleanedData, datamain[3])
             data = np.array(json.loads(cleanedData))
             ans = analyse_data(data, userid)
             # print(ans.keys())
@@ -95,11 +101,13 @@ class dataHandler(APIView):
                     kw:list
                     kw.remove([])
                     kw.append([''])
+            
             # print(datamain[2])
             # resp = {}
-            print(kwlist, type(kwlist))
+            # print(purpose, kwlist, )
+            print(kwlist, type(kwlist), type(json.loads(columns)), columns)
             totdat = np.array(json.loads(cleanedData))
-            resp = analyse_data(totdat, userid, kwlist)
+            resp = analyse_data(totdat, userid, kwlist, json.loads(columns))
             return Response(json.dumps(resp))
         elif(purpose=='Filteruserdata'):
             data = np.array(json.loads(cleanedData))
@@ -111,9 +119,6 @@ class dataHandler(APIView):
             # print(data, di, di1)
             data = np.array(getDateFilter(data, di, di1))
             data = np.array(getTimeFilter(data, data,timelims[0],timelims[1]))
-            # print(data)
-            # ans = analyse_data(data, userid)
-            # print(rows)
             print(rows[0],rows[1])#format to date-indice
             print(rows[2],rows[3])#format to time-indice
             return Response(json.dumps(data.tolist()))
@@ -166,14 +171,23 @@ daysinmonths = {
 }
 
 g_processor:myThread
-def analyse_data(data, userid, kwlist = [['Youtube', '']]):
+def analyse_data(data, userid, kwlist = [['Youtube', '']], columns=[2, 3]):
     global global_data, total_data
+    # if not kwlist:
+    a:list = []
+    kwlistflat = []
+    for kwlistsec in kwlist:
+        kwlistflat.extend(kwlistsec)
+    print(kwlistflat)
+    
+    data = np.array(getDatof(data, columns, kwlistflat))
     total_data[userid] = data
     table, vals = topNentries(data)
     global_data[userid] = {'TopNVideos': table}
-    viewfreq, extdates = plotkwfreqMultiple(data, kwlist)
+    viewfreq, extdates = plotkwfreqMultiple(data, kwlist, columns=columns)
     global_data[userid]['viewFreq'] = viewfreq
     global_data[userid]['extDates'] = extdates
+    global_data[userid]['TopNChannels'] = topNentries(data, 3)[0]
     # kwtable = getDatof(data, [2, 3], ['Jiya', ''])
     # global_data['kwtable'] = json.dumps(kwtable)
     daytime = daytimeplot(data, kwlist)
