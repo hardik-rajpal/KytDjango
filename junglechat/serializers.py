@@ -1,4 +1,4 @@
-from .models import ChatSnippet
+from .models import ChatSnippet, Quote
 from rest_framework import serializers
 alias = {
     'Sourish Wockrell':'The Bear',
@@ -23,3 +23,16 @@ class ChatSnippetSerializer(serializers.ModelSerializer):
         else:
             repre['snippet'] = "abc"
             return repre
+class QuoteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Quote
+        fields = '__all__'
+    def to_representation(self, instance):
+        repre= super().to_representation(instance)
+        repre['numLikes'] = 0
+        if(repre['likedBy']!=''):
+            listips = repre['likedBy'].split('*')
+            repre['numLikes'] = len(listips)
+        del repre['likedBy']
+        return repre
+        

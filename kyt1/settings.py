@@ -42,7 +42,7 @@ INSTALLED_APPS = [
     'junglechat',
     'rest_framework',
     'corsheaders',
-    'viewtracker'
+    'viewtracker',
 ]
 
 MIDDLEWARE = [
