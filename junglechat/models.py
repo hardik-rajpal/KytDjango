@@ -1,10 +1,10 @@
 
 from django.db import models
 from django.utils import timezone
-# class UserToken(models.Model):
-#     dateMade=models.DateField(auto_created=True,default=timezone.now)
-#     def __str__(self):
-#         return str(self.dateMade)
+class UserToken(models.Model):
+    dateMade=models.DateField(auto_created=True,default=timezone.now)
+    def __str__(self):
+        return str(self.dateMade)
 class Tag(models.Model):
     title = models.CharField(max_length=30)
     def __str__(self):
