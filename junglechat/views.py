@@ -29,8 +29,8 @@ def jungleland(request):
 # Create your views here.
 class quotes(APIView):
     def get(self, request,id=None,ip=None):
-        # snips = Quote.objects.filter(published=True)
-        snips = Quote.objects.all()
+        snips = Quote.objects.filter(published=True)
+        # snips = Quote.objects.all()
         serializer = QuoteSerializer(snips, many=True)
         return Response(serializer.data)
     def post(self,req,id=None,ip=None):

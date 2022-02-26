@@ -43,6 +43,7 @@ class Migration(migrations.Migration):
                 ('author', models.CharField(max_length=100)),
                 ('likedBy', models.TextField(blank=True, default='')),
                 ('tags', models.ManyToManyField(related_name='_junglechat_quote_tags_+', to='junglechat.Tag')),
+                ('published',models.BooleanField(default=True))
             ],
         ),
     ]
