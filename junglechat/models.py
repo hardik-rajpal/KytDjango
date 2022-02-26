@@ -1,3 +1,4 @@
+
 from django.db import models
 from django.utils import timezone
 class UserProfileToken(models.Model):
