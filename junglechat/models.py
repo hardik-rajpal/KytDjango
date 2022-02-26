@@ -20,5 +20,6 @@ class Quote(models.Model):
     date = models.DateField(auto_created=True)
     tags = models.ManyToManyField(Tag,related_name='tag+')
     likedBy = models.TextField(blank=True,default='')
+    published = models.BooleanField(default=True)
     def __str__(self):
         return (self.author + ': '+self.text)[:30]
