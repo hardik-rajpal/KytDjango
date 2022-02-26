@@ -6,7 +6,7 @@ from rest_framework import serializers, status
 
 from .serializers import QuoteSerializer
 
-from .models import Quote, UserToken
+from .models import Quote, UserProfileToken
 from .serializers import ChatSnippetSerializer
 
 
@@ -18,7 +18,7 @@ class snippets(APIView):
         serializer = ChatSnippetSerializer(snips, many=True)
         return Response(serializer.data)
     def post(self,request):
-        usrtkn = UserToken.objects.create()
+        usrtkn = UserProfileToken.objects.create()
         return Response(usrtkn.id)
     #TODO:implement put req. to maintain active status.
 def jungleland(request):

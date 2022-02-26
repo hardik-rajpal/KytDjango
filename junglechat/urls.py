@@ -6,7 +6,7 @@ from . import views
 urlpatterns = [
     path('', views.jungleland,name="jungleland"),
     #post req:
-    path('usertoken/',views.snippets.as_view()),
+    path('UserProfileToken/',views.snippets.as_view()),
     url(r'^snips/', views.snippets.as_view()),
     path('quotes/', views.quotes.as_view()),
     path('quotes/<int:id>/<str:ip>/', views.quotes.as_view())
