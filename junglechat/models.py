@@ -17,7 +17,7 @@ class ChatSnippet(models.Model):
 class Quote(models.Model):
     text = models.CharField(max_length=600)
     author = models.CharField(max_length=100)
-    date = models.DateField(auto_now=True)
+    date = models.DateField(auto_created=True)
     tags = models.ManyToManyField(Tag,related_name='tag+')
     likedBy = models.TextField(blank=True,default='')
     def __str__(self):
