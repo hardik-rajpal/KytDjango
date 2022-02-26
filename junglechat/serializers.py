@@ -1,4 +1,4 @@
-from .models import ChatSnippet, Quote
+from .models import ChatSnippet, Quote, Tag
 from rest_framework import serializers
 alias = {
     'Sourish Wockrell':'The Bear',
@@ -34,5 +34,6 @@ class QuoteSerializer(serializers.ModelSerializer):
             listips = repre['likedBy'].split('*')
             repre['numLikes'] = len(listips)
         del repre['likedBy']
+        repre['tags'] = list(map(lambda x:Tag.objects.get(id=x).title,repre['tags']))
         return repre
         

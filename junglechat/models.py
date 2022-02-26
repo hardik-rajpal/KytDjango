@@ -1,5 +1,8 @@
 from django.db import models
-
+class Tag(models.Model):
+    title = models.CharField(max_length=30)
+    def __str__(self):
+        return self.title
 class ChatSnippet(models.Model):
     snippet = models.TextField()
     published = models.BooleanField(default=True)
@@ -9,6 +12,7 @@ class Quote(models.Model):
     text = models.CharField(max_length=600)
     author = models.CharField(max_length=100)
     date = models.DateField(auto_now=True)
+    tags = models.ManyToManyField(Tag,related_name='tag+')
     likedBy = models.TextField(blank=True,default='')
     def __str__(self):
         return (self.author + ': '+self.text)[:30]

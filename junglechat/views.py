@@ -41,12 +41,16 @@ class quotes(APIView):
                     if(not listips.__contains__(ip)):
                         listips.append(ip)
                         quote.likedBy = '*'.join(listips)
+                    else:
+                        listips.remove(ip)
+                        quote.likedBy = '*'.join(listips)
                 else:
                     quote.likedBy = ip
                     print(quote.likedBy)
                 quote.save()
+                return Response(QuoteSerializer(quote).data)
             except:
-                print('failed')
+                print('failed because quote DNE')
                 pass
-        return Response(QuoteSerializer(Quote.objects.all(),many=True).data)
+                return Response(QuoteSerializer(Quote.objects.all()[0]).data)
                 
