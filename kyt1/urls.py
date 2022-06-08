@@ -22,5 +22,6 @@ urlpatterns = [
     path('kytube/', include('kytube.urls')),
     path('thejungle/', include('junglechat.urls')),
     path('viewtracker/', include('viewtracker.urls')),
+    path('coreader/',include('coreader.urls')),
     path('getyourtime/<str:tzo>/', views.timer, name='timer')
 ]
