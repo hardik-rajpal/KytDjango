@@ -12,17 +12,27 @@ class WordBlock(models.Model):
 class Book(models.Model):
     user = models.ForeignKey('coreader.UserProfile',on_delete=models.CASCADE)
     coverLink = models.CharField(max_length=2000,default=common['coverPlaceholder'])
-    numPages = models.IntegerField()
-    bookmark = models.IntegerField()
-    color = models.CharField(max_length=10)
+    numPages = models.IntegerField(default=1)
+    bookmark = models.IntegerField(default=1)
+    uiColor = models.CharField(max_length=10,default=4283215696)
+    pdfPath = models.CharField(max_length=1000,default='')
     archived = models.BooleanField(default=False)
 class Note(models.Model):
     title = models.CharField(max_length=300,blank=False)
     book = models.ForeignKey('coreader.Book',on_delete=models.CASCADE)
 class Glossary(models.Model):
     title = models.CharField(max_length=300,blank=False)
-    book = models.ForeignKey('coreader.Book',on_delete=models.CASCADE)
+    ownerType = models.CharField(max_length=20,choices=[('user','user')
+    ,('book','book')
+    ],
+    default='book'
+    )
+    ownerID = models.IntegerField(default=0)
 class UserProfile(models.Model):
-    user = models.ForeignKey(User,on_delete=models.CASCADE)
-    token = models.UUIDField(primary_key = True,default = uuid.uuid4,editable = True)
+    id = models.IntegerField(primary_key=True)
+    name = models.CharField(max_length=300,default='')
+    accountType = models.CharField(max_length=20,default='google')
+    profilePicLink = models.CharField(max_length=1000,default='https://i.imgur.com/vxP6SFl.png')
+    identifier = models.CharField(max_length=300,default='')
+    token = models.UUIDField(default = uuid.uuid4,editable = True)
     favouriteWords = models.OneToOneField(Glossary,on_delete=models.CASCADE)
