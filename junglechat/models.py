@@ -13,7 +13,10 @@ class ChatSnippet(models.Model):
     snippet = models.TextField()
     published = models.BooleanField(default=True)
     def __str__(self):
-        return self.snippet.split('H#')[1]
+        try:
+            return self.snippet.split('H#')[1]
+        except:
+            return 'Wrong Format'
 class Quote(models.Model):
     text = models.CharField(max_length=600)
     author = models.CharField(max_length=100)
