@@ -11,6 +11,7 @@ class WordBlock(models.Model):
     comment = models.TextField()
 class Book(models.Model):
     user = models.ForeignKey('coreader.UserProfile',on_delete=models.CASCADE)
+    title = models.CharField(max_length=300,default='')
     coverLink = models.CharField(max_length=2000,default=common['coverPlaceholder'])
     numPages = models.IntegerField(default=1)
     bookmark = models.IntegerField(default=1)

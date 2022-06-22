@@ -5,7 +5,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
 
-from coreader.models import Book, UserProfile
+from coreader.models import Book, Glossary, UserProfile
+from coreader.serializers import BookSerializer, FullBookSerializer
 # Create your views here.
 class UserAuth(ViewSet):
     def login(self,request:HttpRequest):
@@ -29,8 +30,6 @@ class BookSet(ViewSet):
         def tokenChecker(*args,**kwargs):
             request:HttpRequest = args[1]
             token = ''
-            print(request.headers['coreaderkey'],type(request.headers['coreaderkey']))
-            print(settings.COREADER_KEY,type(settings.COREADER_KEY))
             if(request.headers.keys().__contains__('coreaderkey')):
                 token = request.headers['coreaderkey']
                 if(token==settings.COREADER_KEY):
@@ -44,10 +43,18 @@ class BookSet(ViewSet):
         query = request.GET.dict()
         try:
             userid = int(query['userid'])
-            isArchived = bool(query['archived'])
+            isArchived = bool(query['archived'].lower()=='true')
         except:
             return Response({'message':'KeyError. Valid keys are userid and archived'},status=400)
         userpro = UserProfile.objects.get(id=userid)
-        # books = Book.objects.get(user=userpro)
-
-        return Response({userpro.name})
+        books = Book.objects.filter(user=userpro,archived=isArchived)
+        data = BookSerializer(books,many=True).data
+        return Response(data)
+    @lowercaseHeaders
+    @token_required
+    def fetchFullBook(self, request:HttpRequest):
+        query = request.GET.dict()
+        qid = int(query['id'])
+        print(qid)
+        book = Book.objects.get(id=qid)
+        return Response(FullBookSerializer(book).data)
