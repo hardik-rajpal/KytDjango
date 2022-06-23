@@ -20,6 +20,7 @@ class Book(models.Model):
     archived = models.BooleanField(default=False)
 class Note(models.Model):
     title = models.CharField(max_length=300,blank=False)
+    content = models.TextField(max_length=20000,default='')
     book = models.ForeignKey('coreader.Book',on_delete=models.CASCADE)
 class Glossary(models.Model):
     title = models.CharField(max_length=300,blank=False)

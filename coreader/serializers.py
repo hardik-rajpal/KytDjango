@@ -36,3 +36,12 @@ class FullBookSerializer(serializers.ModelSerializer):
         repre['glossaries'] = GlossarySerializer(Glossary.objects.filter(ownerType='book',ownerID=instance.id), many=True).data
         repre['notes'] = NoteSerializer(Note.objects.filter(book=instance),many=True).data
         return repre
+class UserProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserProfile
+        fields = '__all__'
+    def to_representation(self, instance:UserProfile):
+        repre =  super().to_representation(instance)
+        repre['favouriteWords'] = GlossarySerializer(Glossary.objects.get(id=repre['favouriteWords'])).data
+        del repre['token']
+        return repre

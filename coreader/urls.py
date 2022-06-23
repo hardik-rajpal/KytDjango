@@ -7,4 +7,9 @@ urlpatterns = [
     path('login/', views.UserAuth.as_view({'post':'login'}),name='login'),
     path('books_by_user/',views.BookSet.as_view({'get':'fetchBookSummaryByUser'},name='books')),
     path('get_full_book/',views.BookSet.as_view({'get':'fetchFullBook'},name='full_book')),
+    path('push_books/',views.BookSet.as_view({'post':'pushBooks'},name='push_books')),
+    path('push_glossaries/',views.BookSet.as_view({'post':'pushGlossaries'},name='push_glossaries')),
+    path('push_notes/',views.BookSet.as_view({'post':'pushNotes'},name='push_notes')),
+    path('push_deletes/',views.BookSet.as_view({'post':'pushDeletes'},name='deletes')),
+    path('get_user_details/',views.UserSet.as_view({'get':'getUserDetails'}),name='userdetails')
 ]
