@@ -97,9 +97,18 @@ def token_required(reqHandler):
             if(token==settings.COREADER_KEY):
                 return reqHandler(*args,**kwargs)
             return Response({'message':'Wrong secret token in headers'},status=401)
-        return Response({'message':'Secret Token missing in headers'},status=401)
+        return Response({'message':'Secret Token missing in headers'},status=403)
     return tokenChecker
-
+def usertoken_required(reqHandler):
+    @lowercaseHeaders
+    @token_required
+    def userTokenChecker(*args,**kwargs):
+        request:HttpRequest = args[1]
+        if(request.headers.keys().__contains__('usertoken')):
+            args[1].user = UserProfile.objects.get(token=request.headers['usertoken'])
+            return reqHandler(*args,**kwargs)
+        return Response({'message':'User Token missing in headers'},status=401)
+    return userTokenChecker
 class BookSet(ViewSet):
     modelDict = {
         'book':Book,
@@ -107,26 +116,26 @@ class BookSet(ViewSet):
         'note':Note,
         'wordblock':WordBlock
     }
-    @token_required
+    @usertoken_required
     def fetchBookSummaryByUser(self, request:HttpRequest):
         query = request.GET.dict()
         try:
-            userid = int(query['userid'])
             isArchived = bool(query['archived'].lower()=='true')
         except:
-            return Response({'message':'KeyError. Valid keys are userid and archived'},status=400)
-        userpro = UserProfile.objects.get(id=userid)
+            return Response({'message':'KeyError. archived key not provided'},status=400)
+        userpro = request.user
         books = Book.objects.filter(user=userpro,archived=isArchived)
         data = BookSerializer(books,many=True).data
         return Response(data)
-    @token_required
+    @usertoken_required
     def fetchFullBook(self, request:HttpRequest):
         query = request.GET.dict()
         qid = int(query['id'])
-        print(qid)
-        book = Book.objects.get(id=qid)
-        return Response(FullBookSerializer(book).data)
-    @token_required
+        book:Book = Book.objects.get(id=qid)
+        if(book.user.id==request.user.id):
+            return Response(FullBookSerializer(book).data)
+        return Response('Not your book, homie',status=403)
+    @usertoken_required
     def pushBooks(self, request:HttpRequest):
         body = json.loads(request.body.decode())
         body:List[BookToPush]
@@ -134,7 +143,9 @@ class BookSet(ViewSet):
         for book in body:
             book = BookToPush.fromBody(book)
             if(book.id==-1):
-                user = UserProfile.objects.get(id=book.user)
+                user:UserProfile = UserProfile.objects.get(id=book.user)
+                if(user.id!=request.user.id):
+                    continue
                 bookobj:Book = Book.objects.create(
                     user=user,
                     title=book.title,
@@ -147,6 +158,8 @@ class BookSet(ViewSet):
                     )
             else:
                 bookobj = Book.objects.get(id=book.id)
+                if(bookobj.user.id!=request.user.id):
+                    continue
                 bookobj.title = book.title
                 bookobj.coverLink=book.coverLink
                 bookobj.numPages=book.numPages
@@ -157,12 +170,21 @@ class BookSet(ViewSet):
                 bookobj.save()
             serializedBooks.append(BookSerializer(bookobj).data)
         return Response(serializedBooks)
-    @token_required
+    @usertoken_required
     def pushGlossaries(self,request:HttpRequest):
         body = json.loads(request.body.decode())
         serializedGlossaries = []
         for glossary in body:
             glossary = GlossaryToPush.fromDict(glossary)
+            if(glossary.ownerType=='book'):
+                book:Book = Book.objects.get(id=glossary.ownerID)
+                if(book.user.id!=request.user.id):
+                    serializedGlossaries.append(f'not your book {glossary.ownerID}')
+                    continue
+            else:
+                userpro = UserProfile.objects.get(id=glossary.ownerID)
+                if(userpro.id!=request.user.id):
+                    serializedGlossaries.append(f'not your profile {glossary.ownerID}')
             if(glossary.id==-1):
                 glossaryobj = Glossary.objects.create(
                     title = glossary.title,
@@ -180,6 +202,7 @@ class BookSet(ViewSet):
                         word=wb.word,
                         isKnown=wb.isKnown,
                         comment=wb.comment,
+                        glossary=glossaryobj
                     )
                 else:
                     wordobj:WordBlock = WordBlock.objects.get(id=wb.id)
@@ -189,45 +212,68 @@ class BookSet(ViewSet):
                     wordobj.save()
             serializedGlossaries.append(GlossarySerializer(glossaryobj).data)
         return Response(serializedGlossaries)
-    @token_required
+    @usertoken_required
     def pushNotes(self,request:HttpRequest):
         body = json.loads(request.body.decode())
         serializedNotes=[]
         for note in body:
             note = NoteToPush.fromDict(note)
+            bookobj:Book = Book.objects.get(id=note.book)
+            if(bookobj.user.id!=request.user.id):
+                serializedNotes.append(f'not your book {note.book}')
+                continue
             if(note.id==-1):
                 noteobj = Note.objects.create(
                     title=note.title,
                     content=note.content,
-                    book=Book.objects.get(id=note.book)
+                    book=bookobj
                 )
             else:
                 noteobj:Note = Note.objects.get(id=-1)
                 noteobj.title=note.title
                 noteobj.content=note.content
+                noteobj.book = bookobj
                 noteobj.save()
             serializedNotes.append(NoteSerializer(noteobj).data)
         return Response(serializedNotes)
-    @token_required
+    @usertoken_required
     def pushDeletes(self, request:HttpRequest):
         body = json.loads(request.body.decode())
         deleted = []
-        print(body)
         for i,item in enumerate(body):
             model:models.Model = self.modelDict[item['model']]
             try:
                 model.objects.get(id=item['id']).delete()
+                if(item['model']=='book'):
+                    Glossary.objects.all().filter(ownerType='book',ownerID=item['id']).delete()
                 deleted.append(i)
             except:
                 continue
         return Response(deleted)
 class UserSet(ViewSet):
-    @token_required
+    @usertoken_required
     def getUserDetails(self,request:HttpRequest):
-        body = request.GET.dict()
-        if(body.keys().__contains__('id')):
-            return Response(UserProfileSerializer(UserProfile.objects.get(id=body['id'])).data)
-        if(body.keys().__contains__('identifier')):
-            return Response(UserProfileSerializer(UserProfile.objects.get(id=body['identifier'])).data)
-        
-        return Response('Provide id or identifier',status=400)
+        return Response(UserProfileSerializer(request.user).data)
+    @token_required
+    def loginUser(self,request:HttpRequest):
+        body = json.loads(request.body.decode())
+        identifier = body['identifier']
+        try:
+            user:UserProfile = UserProfile.objects.get(identifier=identifier)
+        except:
+            favs:Glossary = Glossary.objects.create(
+                title='Favourites',
+                ownerType='user',
+                ownerID=0
+            )
+
+            user:UserProfile = UserProfile.objects.create(
+                name=body['name'],
+                accountType=body['accountType'],
+                profilePicLink=body['profilePicLink'],
+                identifier=identifier,
+                favouriteWords=favs
+            )
+            favs.ownerID = user.id
+            favs.save()
+        return Response({'token':user.token,'user':UserProfileSerializer(user).data})

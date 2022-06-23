@@ -15,7 +15,7 @@ class Book(models.Model):
     coverLink = models.CharField(max_length=2000,default=common['coverPlaceholder'])
     numPages = models.IntegerField(default=1)
     bookmark = models.IntegerField(default=1)
-    uiColor = models.CharField(max_length=10,default=4283215696)
+    uiColor = models.IntegerField(default=4283215696)
     pdfPath = models.CharField(max_length=1000,default='')
     archived = models.BooleanField(default=False)
 class Note(models.Model):
